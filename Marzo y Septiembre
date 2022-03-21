@@ -1,0 +1,91 @@
+#include <RTClib.h>
+#include <Wire.h>
+//datos de sensor de humedad terrestre mas de 1000 SECO SECO; 390 sumergido en agua
+RTC_DS3231 rtc;
+const int RELE = 8; //SEÑAL DE RELE   (ELECTRO VALVULA)
+const int RELE2 = 9; //SEÑAL DE RELE 2 (BOMBA)
+bool Riego = true;
+
+void setup() {
+  pinMode(RELE, OUTPUT);
+  pinMode(RELE2, OUTPUT);
+  Serial.begin(9600);
+  if (! rtc.begin()) {        // si falla la inicializacion del modulo
+    Serial.println("Modulo RTC no encontrado !");  // muestra mensaje de error
+    while (1);   // Y CREA bucle infinito que detiene ejecucion del programa
+  }
+  //rtc.adjust (DateTime(2022, 2, 22, 15, 40, 00)); //CONFIGURA EL RTC, CON LA HORA QUE SE FIJE EN LOS PARAMETROS
+  //rtc.adjust(DateTime(_DATE,TIME_));
+}
+// funcion que permite establecer fecha y horario al momento de la compilacion. Comentar esta linea
+// y volver a subir para normal operacion
+
+
+void loop() {
+  //INICIACION DE DISPOSITIVOS
+  digitalWrite(RELE, HIGH);       //apaga el rele por si quedo prendido
+  digitalWrite(RELE2, HIGH);
+  DateTime fecha = rtc.now();
+
+
+//RIEGO MARZO Y SEPTIEMBRE (1 POR DIA)
+
+while ( fecha.month() == 3 || fecha.month() == 9) {// el simbolo || es como decir este O este
+  DateTime fecha = rtc.now();
+  Serial.print(fecha.day());       // funcion que obtiene el dia de la fecha completa
+  Serial.print("/");               // caracter barra como separador
+  Serial.print(fecha.month());     // funcion que obtiene el mes de la fecha completa
+  Serial.print("/");               // caracter barra como separador
+  Serial.print(fecha.year());      // funcion que obtiene el año de la fecha completa
+  Serial.print(" ");               // caracter espacio en blanco como separador
+  Serial.print(fecha.hour());      // funcion que obtiene la hora de la fecha completa
+  Serial.print(":");             // caracter dos puntos como separador
+  Serial.print(fecha.minute());  // funcion que obtiene los minutos de la fecha completa
+  Serial.print(":");             // caracter dos puntos como separador
+  Serial.println(fecha.second());    // funcion que obtiene los segundos de la fecha completa
+  delay (1000);
+
+  //PRIMER TURNO DE RIEGO
+
+  if ( fecha.hour() == 9  ) { // si es las 7
+    Serial.println( "Tiempo de Riego Mañanero Activado" ); //escribe ese texto en Monitor serie
+    Serial.println("RIEGO 1");
+    Serial.println("A LAS 08 HS");
+    Riego = true; //restablece valores de variables de control en verdadero para que pueda volver a entrar al ciclo sigueinte
+   Serial.println ("Variable Riego, Puesta en true");   //escribe ese texto en Monitor serie
+        delay (1000);
+  }
+
+    if ( Riego == true ) {              // si la variable Riego tiene un valor verdadero
+  while ( fecha.hour() == 10 && fecha.minute() >= 0 && fecha.minute() <5   ) { // si es entre las 8:00 y  las 08:59
+        Serial.println ("Comienza Riego Matutino");     //escribe ese texto en monitor serie
+        delay (1000);
+        Serial.println("PRENDIENDO RELE 1");
+        Serial.println("PRENDIENDO RELE 2");
+        digitalWrite(RELE, LOW);                              //prende el rele
+        digitalWrite(RELE2, LOW);
+        Serial.println("RELE 1 PRENDIDO");
+        Serial.println("RELE 2 PRENDIDO");
+        delay (300000);
+        break;
+       }
+       
+
+    }
+ if ( fecha.hour() == 10 && fecha.minute() == 7  ) { // si hora =9
+        Serial.println ("Terminó Riego Matutino");     //escribe ese texto en monitor serie
+        Serial.println("APAGANDO RELE 1");
+        Serial.println("APAGANDO RELE 2");
+        digitalWrite(RELE, HIGH);
+        digitalWrite(RELE2, HIGH);//apaga el rele
+        Serial.println("RELE 1 APAGADO");
+        Serial.println("RELE 2 APAGADO");
+        Serial.println ("Proceso de Riego Terminado");  //escribe ese texto en Monitor serie
+        Riego = false;
+        Serial.println ("Variable Riego, Puesta en false");
+   
+                                  
+  }
+
+    }
+    }
